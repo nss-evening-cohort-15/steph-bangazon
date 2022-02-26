@@ -1,4 +1,5 @@
 from datetime import datetime
+from bangazon_api import serializers
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
@@ -65,6 +66,7 @@ class OrderView(ViewSet):
                 pk=request.data['paymentTypeId'], customer=request.auth.user)
             order.payment_type = payment_type
             order.completed_on = datetime.now()
+            order.save()
             return Response({'message': "Order Completed"})
         except (Order.DoesNotExist, PaymentType.DoesNotExist) as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
