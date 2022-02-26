@@ -67,7 +67,7 @@ class OrderView(ViewSet):
             order.payment_type = payment_type
             order.completed_on = datetime.now()
             order.save()
-            return Response({'message': "Order Completed"})
+            return Response({'message': "Order Completed"}, status=status.HTTP_200_OK)
         except (Order.DoesNotExist, PaymentType.DoesNotExist) as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
 

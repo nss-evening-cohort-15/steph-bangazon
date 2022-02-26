@@ -4,7 +4,7 @@ from rest_framework.authtoken.models import Token
 from django.core.management import call_command
 from django.contrib.auth.models import User
 
-from bangazon_api.models import Order, Product
+from bangazon_api.models import Order, Product, PaymentType
 
 
 class OrderTests(APITestCase):
@@ -18,21 +18,25 @@ class OrderTests(APITestCase):
 
         self.user2 = User.objects.filter(store=None).last()
         product = Product.objects.get(pk=1)
+        payment = PaymentType.objects.get(pk=1) 
 
         self.order1 = Order.objects.create(
             user=self.user1
         )
 
         self.order1.products.add(product)
+        # self.order1.payment_type.add(payment)
 
         self.order2 = Order.objects.create(
             user=self.user2
         )
 
         self.order2.products.add(product)
+        # self.order2.payment_type.add(payment)
 
         self.client.credentials(
             HTTP_AUTHORIZATION=f'Token {self.token.key}')
+        self.order1.payment_type.add(payment)
 
     def test_list_orders(self):
         """The orders list should return a list of orders for the logged in user"""
@@ -44,4 +48,11 @@ class OrderTests(APITestCase):
         response = self.client.delete(f'/api/orders/{self.order1.id}')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-    # TODO: Complete Order test
+    def test_complete_order(self):
+        """Adding a payment type should complete the order"""
+
+        response = self.client.put('api/orders/complete')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        order_completed = Order.objects.get('api/orders/complete')
+        self.assertEqual(order_completed.payment_type, 1)
