@@ -40,8 +40,8 @@ class PaymentTypeView(ViewSet):
         try:
             payment_type = PaymentType.objects.create(
                 customer=request.auth.user,
-                merchant_name=request.data['acctNumber'],
-                acct_number=request.data['merchant']
+                merchant_name=request.data['merchant'],
+                acct_number=request.data['acctNumber']
             )
             serializer = PaymentTypeSerializer(payment_type)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -67,3 +67,5 @@ class PaymentTypeView(ViewSet):
             return Response(None, status=status.HTTP_204_NO_CONTENT)
         except PaymentType.DoesNotExist as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+
+
