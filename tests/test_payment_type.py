@@ -37,3 +37,15 @@ class PaymentTests(APITestCase):
         self.assertIsNotNone(response.data['id'])
         self.assertEqual(response.data["merchant_name"], data['merchant'])
         self.assertEqual(response.data["acct_number"], data['acctNumber'])
+
+
+    def test_delete_payment_type(self):
+        """
+        Verifies that a payment type can be deleted by a customer.
+        """
+        response = self.client.delete(f'/api/payment-types/{self.faker.payment_type.id}')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # response = self.client.get(f'/api/payment-types/{self.faker.id}')
+        # self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        
