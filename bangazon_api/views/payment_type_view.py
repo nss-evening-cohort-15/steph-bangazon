@@ -1,6 +1,7 @@
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -59,10 +60,11 @@ class PaymentTypeView(ViewSet):
             )
         }
     )
+    @action(methods=['delete'], detail=True)
     def delete(self, request, pk):
         """Delete a payment type"""
         try:
-            payment_type = PaymentType.objects.get(pk=pk)
+            payment_type = PaymentType.objects.get(pk=pk, customer=request.auth.user)
             payment_type.delete()
             return Response(None, status=status.HTTP_204_NO_CONTENT)
         except PaymentType.DoesNotExist as ex:
