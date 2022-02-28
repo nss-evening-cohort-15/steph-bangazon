@@ -14,7 +14,7 @@ from bangazon_api.models.product import Product
 class ProductTests(APITestCase):
     def setUp(self):
         """
-
+        Seed the database.
         """
         call_command('seed_db', user_count=2)
         self.user1 = User.objects.filter(store__isnull=False).first()
@@ -25,6 +25,7 @@ class ProductTests(APITestCase):
 
         self.faker = Faker()
         self.faker.add_provider(faker_commerce.Provider)
+
 
     def test_create_product(self):
         """
@@ -67,6 +68,7 @@ class ProductTests(APITestCase):
         product_updated = Product.objects.get(pk=product.id)
         self.assertEqual(product_updated.description, data['description'])
 
+
     def test_get_all_products(self):
         """
         Ensure we can get a collection of products.
@@ -75,3 +77,16 @@ class ProductTests(APITestCase):
         response = self.client.get('/api/products')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), Product.objects.count())
+
+
+    def test_delete_product(self):
+        """
+        Ensure we can delete a product.
+        """
+        product = Product.objects.first()
+
+        response = self.client.delete(f'/api/products/{product.id}')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        response = self.client.get(f'/api/products/{product.id}')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
