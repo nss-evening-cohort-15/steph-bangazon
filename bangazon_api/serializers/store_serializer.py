@@ -2,7 +2,6 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from bangazon_api.models import Store
 
-
 class StoreUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -14,7 +13,7 @@ class StoreSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Store
-        fields = ('id', 'name', 'description', 'seller', 'products')
+        fields = ('id', 'name', 'description', 'seller', 'products', 'favorites')
         depth = 1
 
 

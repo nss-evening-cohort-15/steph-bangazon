@@ -1,11 +1,14 @@
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-from bangazon_api.models import Store
-from bangazon_api.serializers import StoreSerializer, MessageSerializer, AddStoreSerializer
+from bangazon_api.models import Store, Favorite
+from bangazon_api.serializers import ( 
+    StoreSerializer, MessageSerializer, AddStoreSerializer )
+from django.contrib.auth.models import User
 
 
 class StoreView(ViewSet):
@@ -99,3 +102,58 @@ class StoreView(ViewSet):
             return Response({'message': ex.args[0]}, status=status.HTTP_400_BAD_REQUEST)
         except Store.DoesNotExist as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+         
+    # @action(methods=['get'], detail=False)    
+    # def favorite(self, request, pk):
+    #     """Get the user's favorite stores"""
+    #     try:
+    #         fav_stores = Favorite.objects.filter(pk=request.auth.user)
+    #         serializer = StoreFavoriteSerializer(fav_stores, many=True)
+    #         return Response(serializer.data)
+    #     except Favorite.DoesNotExist:
+    #         return Response({
+    #             'message': 'You do not have any favorite stores.'
+    #             },
+    #             status=status.HTTP_404_NOT_FOUND
+    #         )
+
+    @swagger_auto_schema(
+        method='POST',
+        responses={
+            201: openapi.Response(
+                description="No content, the store was added to favorites",
+            ),
+            404: openapi.Response(
+                description="Either the Product or User was not found",
+                schema=MessageSerializer()
+            )
+        }
+    )
+    @action(methods=['post', 'delete'], detail=True)
+    def favorite(self, request, pk):
+        """Add or delete a favorite store"""
+        try:
+            store = Store.objects.get(pk=pk)
+            customer = User.objects.get(request.auth.user)
+        except Store.DoesNotExist as ex:
+            return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+        except User.DoesNotExist as ex:
+            return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.method == "POST":
+            favorite = Favorite.objects.create(
+                store=store,
+                customer=customer
+            )
+
+            return Response(None, status=status.HTTP_201_CREATED)
+
+        if request.method == 'DELETE':
+            favorite = Favorite.objects.get(
+                store=store,
+                customer=customer
+            )
+            favorite.delete()
+
+            return Response(None, status=status.HTTP_204_NO_CONTENT)
+    
