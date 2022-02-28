@@ -1,3 +1,4 @@
+from faker import Faker
 from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework.authtoken.models import Token
@@ -15,44 +16,56 @@ class OrderTests(APITestCase):
         call_command('seed_db', user_count=3)
         self.user1 = User.objects.filter(store=None).first()
         self.token = Token.objects.get(user=self.user1)
+        # self.payment_type = PaymentType.objects.get(customer=self.user1)
 
-        self.user2 = User.objects.filter(store=None).last()
         product = Product.objects.get(pk=1)
-        payment = PaymentType.objects.get(pk=1) 
 
         self.order1 = Order.objects.create(
-            user=self.user1
+            user=self.user1,
         )
 
         self.order1.products.add(product)
-        # self.order1.payment_type.add(payment)
+ 
 
-        self.order2 = Order.objects.create(
-            user=self.user2
-        )
-
-        self.order2.products.add(product)
-        # self.order2.payment_type.add(payment)
+        # self.order1.payment_type = self.payment_type
 
         self.client.credentials(
             HTTP_AUTHORIZATION=f'Token {self.token.key}')
-        self.order1.payment_type.add(payment)
+
+        self.faker = Faker()
 
     def test_list_orders(self):
         """The orders list should return a list of orders for the logged in user"""
         response = self.client.get('/api/orders')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+        # self.assertEqual(len(response.data), Order.objects.count(user=self.user1))
 
     def test_delete_order(self):
+        """
+        Ensure order can be deleted
+        """
         response = self.client.delete(f'/api/orders/{self.order1.id}')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_complete_order(self):
         """Adding a payment type should complete the order"""
 
-        response = self.client.put('api/orders/complete')
+        # data = {
+        #     "merchant": self.faker.credit_card_provider(),
+        #     "acctNumber": self.faker.credit_card_number()
+        # }
+
+        response = self.client.put(f'api/orders/{self.order1.id}/complete')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        order_completed = Order.objects.get('api/orders/complete')
-        self.assertEqual(order_completed.payment_type, 1)
+        # response = self.client.put(f'api/orders/{self.order1.id}/complete', data, format='json')
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # self.assertIsNotNone(response.data['id'])
+        # self.assertEqual(response.data["merchant_name"], data['merchant'])
+        # self.assertEqual(response.data["acct_number"], data['acctNumber'])
+
+        # response = self.client.get('/api/orders')
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        
+    

@@ -45,7 +45,4 @@ class PaymentTests(APITestCase):
         """
         response = self.client.delete(f'/api/payment-types/{self.faker.payment_type.id}')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-
-        # response = self.client.get(f'/api/payment-types/{self.faker.id}')
-        # self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         
