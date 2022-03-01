@@ -5,6 +5,6 @@ from .product_serializer import (
     ProductSerializer, CreateProductSerializer,
     AddRemoveRecommendationSerializer, AddProductRatingSerializer)
 from .store_serializer import (
-    StoreUserSerializer, StoreSerializer, AddStoreSerializer )
+    StoreUserSerializer, StoreSerializer, AddStoreSerializer, FavoriteStoreSerializer )
 from .user_serializer import UserSerializer, CreateUserSerializer
 from .message_serializer import MessageSerializer

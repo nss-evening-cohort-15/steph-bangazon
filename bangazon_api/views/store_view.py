@@ -1,3 +1,4 @@
+import re
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
@@ -7,8 +8,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from bangazon_api.models import Store, Favorite
 from bangazon_api.serializers import ( 
-    StoreSerializer, MessageSerializer, AddStoreSerializer )
-from django.contrib.auth.models import User
+    StoreSerializer, MessageSerializer, AddStoreSerializer, FavoriteStoreSerializer )
 
 
 class StoreView(ViewSet):
@@ -46,7 +46,7 @@ class StoreView(ViewSet):
             )
         }
     )
-    def list(self, request):
+    def list(self):
         """Get a list of all stores"""
         stores = Store.objects.all()
         serializer = StoreSerializer(stores, many=True)
@@ -103,19 +103,32 @@ class StoreView(ViewSet):
         except Store.DoesNotExist as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
          
-    # @action(methods=['get'], detail=False)    
-    # def favorite(self, request, pk):
-    #     """Get the user's favorite stores"""
-    #     try:
-    #         fav_stores = Favorite.objects.filter(pk=request.auth.user)
-    #         serializer = StoreFavoriteSerializer(fav_stores, many=True)
-    #         return Response(serializer.data)
-    #     except Favorite.DoesNotExist:
-    #         return Response({
-    #             'message': 'You do not have any favorite stores.'
-    #             },
-    #             status=status.HTTP_404_NOT_FOUND
-    #         )
+
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Response(
+                description="Returns the current user's favorite stores",
+                schema=FavoriteStoreSerializer()
+            ),
+            404: openapi.Response(
+                description="Favorite stores were not found for the user",
+                schema=MessageSerializer()
+            ),
+        }
+    )
+    @action(methods=['get'], detail=False)
+    def user_favorites(self, request):
+        """Get a list of favorite stores of current user"""
+
+        try:
+            favorites = Favorite.objects.filter(customer=request.auth.user,)
+            serializer = FavoriteStoreSerializer(favorites, many=True, context={'request': request})
+            return Response(serializer.data)
+        except Favorite.DoesNotExist:
+            return Response({
+                'message': 'You do not have any favorite stores.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
     @swagger_auto_schema(
         method='POST',
@@ -124,7 +137,7 @@ class StoreView(ViewSet):
                 description="No content, the store was added to favorites",
             ),
             404: openapi.Response(
-                description="Either the Product or User was not found",
+                description="Either the Store or User was not found",
                 schema=MessageSerializer()
             )
         }
@@ -134,10 +147,10 @@ class StoreView(ViewSet):
         """Add or delete a favorite store"""
         try:
             store = Store.objects.get(pk=pk)
-            customer = User.objects.get(request.auth.user)
+            customer = request.auth.user
         except Store.DoesNotExist as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
-        except User.DoesNotExist as ex:
+        except customer.DoesNotExist as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
 
         if request.method == "POST":
@@ -145,7 +158,6 @@ class StoreView(ViewSet):
                 store=store,
                 customer=customer
             )
-
             return Response(None, status=status.HTTP_201_CREATED)
 
         if request.method == 'DELETE':
